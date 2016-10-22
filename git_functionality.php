@@ -48,7 +48,13 @@ function get_branch_name($file_content) {
 	foreach ( $lines as $line ) {
 		if ( strpos( $line, 'ref:' ) === 0 ) {
 			$in_line = explode( "/", $line );
-			$branch_name = $in_line[ count( $in_line ) - 1 ];
+
+			// Handle special case with feature/issue-000 branch names
+			if( 4 == count( $in_line ) && 'heads' == $in_line[1] ) {
+				$branch_name = $in_line[2] . '/' . $in_line[3];
+			} else {
+				$branch_name = $in_line[ count( $in_line ) - 1 ];
+			}
 			break;
 		}
 	}
