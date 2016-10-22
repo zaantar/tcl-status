@@ -8,6 +8,8 @@ Author: hkirat, zaantar
 Author URI: http://zaantar.eu
 Text Domain: tcl-status
 Domain Path: /languages
+License: GNU General Public License v2 or later
+License URI: http://www.gnu.org/licenses/gpl-2.0.html
 */
 
 namespace TclStatus;
@@ -50,7 +52,7 @@ final class Main {
 
 	private function get_tcl_string() {
 		if( $this->is_tcl_loaded() ) {
-			return sprintf( 'tcl: %s (%d)', $this->get_tcl_plugin_location(), $this->get_tcl_version() );
+			return sprintf( 'tcl: %s (%d%s)', $this->get_tcl_plugin_location(), $this->get_tcl_version(), $this->get_tcl_branch_name() );
 		} else {
 			return 'tcl: ----';
 		}
@@ -84,6 +86,31 @@ final class Main {
 		} else {
 			return 0;
 		}
+	}
+
+
+	private function get_tcl_branch_name() {
+
+		require_once dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'git_functionality.php';
+
+		if ( ! defined( 'TOOLSET_COMMON_PATH' ) ) {
+			return '';
+		}
+
+		$git_head_file = Git\get_git_head_file_content( TOOLSET_COMMON_PATH );
+		if ( ! $git_head_file ) {
+			return '';
+		}
+
+		$branch_name = Git\get_branch_name( $git_head_file );
+
+		if ( ! $branch_name ) {
+			return '';
+		}
+
+		$result = sprintf( ' @ %s',  $branch_name );
+
+		return $result;
 	}
 }
 
