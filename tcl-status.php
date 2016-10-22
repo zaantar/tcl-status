@@ -40,13 +40,12 @@ final class Main {
 			)
 		);
 
-		/*$wp_admin_bar->add_node(
-			array(
-				'parent' => self::PARENT_NOTE_ID,
-				'id' => 'xxxxxx',
-				'title' => $this->get_tcl_string()
-			)
-		);*/
+		$this->add_types_node( $wp_admin_bar, self::PARENT_NOTE_ID );
+		$this->add_cred_node( $wp_admin_bar, self::PARENT_NOTE_ID );
+		$this->add_views_node( $wp_admin_bar, self::PARENT_NOTE_ID );
+		$this->add_access_node( $wp_admin_bar, self::PARENT_NOTE_ID );
+		$this->add_layouts_node( $wp_admin_bar, self::PARENT_NOTE_ID );
+
 	}
 
 
@@ -89,15 +88,11 @@ final class Main {
 	}
 
 
-	private function get_tcl_branch_name() {
+	private function get_branch_name( $repository_path ) {
 
 		require_once dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'git_functionality.php';
 
-		if ( ! defined( 'TOOLSET_COMMON_PATH' ) ) {
-			return '';
-		}
-
-		$git_head_file = Git\get_git_head_file_content( TOOLSET_COMMON_PATH );
+		$git_head_file = Git\get_git_head_file_content( $repository_path );
 		if ( ! $git_head_file ) {
 			return '';
 		}
@@ -111,6 +106,161 @@ final class Main {
 		$result = sprintf( ' @ %s',  $branch_name );
 
 		return $result;
+
+	}
+
+
+	private function get_tcl_branch_name() {
+
+		if ( ! defined( 'TOOLSET_COMMON_PATH' ) ) {
+			return '';
+		}
+
+		return $this->get_branch_name( TOOLSET_COMMON_PATH );
+
+	}
+
+
+	/**
+	 * @param \WP_Admin_Bar $wp_admin_bar
+	 * @param string $parent
+	 */
+	private function add_types_node( $wp_admin_bar, $parent ) {
+
+		$is_types_active = defined( 'TYPES_VERSION' );
+
+		if( ! $is_types_active ) {
+			return;
+		}
+
+		$types_string = sprintf(
+			'types: %s%s',
+			TYPES_VERSION,
+			$this->get_branch_name( TYPES_ABSPATH )
+		);
+
+		$wp_admin_bar->add_node(
+			array(
+				'parent' => $parent,
+				'id' => "{$parent}_types",
+				'title' => $types_string
+			)
+		);
+	}
+
+
+	/**
+	 * @param \WP_Admin_Bar $wp_admin_bar
+	 * @param string $parent
+	 */
+	private function add_cred_node( $wp_admin_bar, $parent ) {
+
+		$is_cred_active = defined( 'CRED_FE_VERSION' );
+
+		if( ! $is_cred_active ) {
+			return;
+		}
+
+		// Support before and after refactoring
+		$cred_path = defined( 'CRED_ABSPATH' ) ? CRED_ABSPATH : CRED_ROOT_PLUGIN_PATH;
+
+		$cred_string = sprintf(
+			'cred: %s%s',
+			CRED_FE_VERSION,
+			$this->get_branch_name( $cred_path )
+		);
+
+		$wp_admin_bar->add_node(
+			array(
+				'parent' => $parent,
+				'id' => "{$parent}_cred",
+				'title' => $cred_string
+			)
+		);
+	}
+
+
+	/**
+	 * @param \WP_Admin_Bar $wp_admin_bar
+	 * @param string $parent
+	 */
+	private function add_views_node( $wp_admin_bar, $parent ) {
+
+		$is_views_active = defined( 'WPV_VERSION' );
+
+		if( ! $is_views_active ) {
+			return;
+		}
+
+		$views_string = sprintf(
+			'views: %s%s',
+			WPV_VERSION,
+			$this->get_branch_name( WPV_PATH )
+		);
+
+		$wp_admin_bar->add_node(
+			array(
+				'parent' => $parent,
+				'id' => "{$parent}_views",
+				'title' => $views_string
+			)
+		);
+	}
+
+
+	/**
+	 * @param \WP_Admin_Bar $wp_admin_bar
+	 * @param string $parent
+	 */
+	private function add_layouts_node( $wp_admin_bar, $parent ) {
+
+		$is_layouts_active = defined( 'WPDDL_VERSION' );
+
+		if( ! $is_layouts_active ) {
+			return;
+		}
+
+		$layouts_string = sprintf(
+			'layouts: %s%s',
+			WPDDL_VERSION,
+			$this->get_branch_name( WPDDL_ABSPATH )
+		);
+
+		$wp_admin_bar->add_node(
+			array(
+				'parent' => $parent,
+				'id' => "{$parent}_layouts",
+				'title' => $layouts_string
+			)
+		);
+	}
+
+
+	/**
+	 * @param \WP_Admin_Bar $wp_admin_bar
+	 * @param string $parent
+	 */
+	private function add_access_node( $wp_admin_bar, $parent ) {
+
+		$is_access_loaded = defined( 'TACCESS_VERSION' );
+
+		if( ! $is_access_loaded ) {
+			return;
+		}
+
+		$access_string = sprintf(
+			'access: %s%s',
+			TACCESS_VERSION,
+			$this->get_branch_name( TACCESS_PLUGIN_PATH )
+		);
+
+		$wp_admin_bar->add_node(
+			array(
+				'parent' => $parent,
+				'id' => "{$parent}_access",
+				'title' => $access_string
+			)
+		);
 	}
 }
 
