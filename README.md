@@ -10,6 +10,8 @@ The first item shows the information about the Toolset Comon library:
 
 >`tcl: ` *{from what plugin is the library loaded}* `(` *{$toolset_common_version}* `@` *{branch name}* `)`
 
+The `$toolset_common_version` value is displayed only on recent branches where it is accessible from the outside.
+
 Remaining items show active Toolset plugins, their version and branch. 
 Following plugins are supported:
 
