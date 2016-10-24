@@ -18,12 +18,14 @@ final class Main {
 
 	const PARENT_NOTE_ID = 'tcl-status';
 
+	private $supported_plugins = array();
+
 	public static function initialize() {
 		new self();
 	}
 
 
-	public function __construct() {
+	private function __construct() {
 		add_action( 'admin_bar_menu', array( $this, 'modify_admin_bar' ), 999 );
 
 		$this->supported_plugins = array(
@@ -114,7 +116,7 @@ final class Main {
 	}
 
 
-	private function get_branch_name( $repository_path ) {
+	private function get_branch_info( $repository_path ) {
 
 		require_once dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'git_functionality.php';
 
@@ -129,7 +131,10 @@ final class Main {
 			return '';
 		}
 
-		$result = sprintf( ' @ %s',  $branch_name );
+		$git_fetch_head_file_time = Git\get_git_fetch_head_file_time( $repository_path );
+		$last_pulled = $this->file_time_string( $git_fetch_head_file_time );
+
+		$result = sprintf( ' @ %s%s',  $branch_name, $last_pulled );
 
 		return $result;
 
@@ -142,15 +147,13 @@ final class Main {
 			return '';
 		}
 
-		return $this->get_branch_name( TOOLSET_COMMON_PATH );
+		return $this->get_branch_info( TOOLSET_COMMON_PATH );
 
 	}
 
 
-	private $supported_plugins = array();
-
-
 	/**
+	 * @param string $plugin_slug
 	 * @param \WP_Admin_Bar $wp_admin_bar
 	 * @param string $parent
 	 */
@@ -175,7 +178,7 @@ final class Main {
 			'%s: %s%s',
 			$plugin_slug,
 			constant( $plugin_config['version_constant'] ),
-			$this->get_branch_name( $abspath )
+			$this->get_branch_info( $abspath )
 		);
 
 		$wp_admin_bar->add_node(
@@ -186,6 +189,17 @@ final class Main {
 			)
 		);
 	}
+
+
+	function file_time_string( $git_fetch_head_file_time ) {
+		if( ! $git_fetch_head_file_time ) {
+			return ' &#x292B;';
+		}
+		$time_elapsed = human_time_diff( $git_fetch_head_file_time );
+
+		return sprintf( ' &#x2798; %s ago', $time_elapsed );
+	}
+
 
 }
 

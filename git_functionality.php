@@ -20,6 +20,27 @@ function get_git_head_file_content( $repository_path ) {
 }
 
 
+function get_git_fetch_head_file_time( $repository_path ) {
+	$head_fetch_file_path = construct_fetch_head_path( $repository_path );
+	if (!is_file($head_fetch_file_path)) {
+		$time = null;
+	} else {
+		$time = filemtime($head_fetch_file_path);
+	}
+
+	return  $time;
+}
+
+
+function construct_fetch_head_path( $repository_path ) {
+	$git_dir_name = git_directory_path( $repository_path );
+
+	$file_path = $git_dir_name . DIRECTORY_SEPARATOR . 'FETCH_HEAD';
+
+	return $file_path;
+}
+
+
 function construct_head_path( $repository_path ) {
 	$git_dir_name = git_directory_path( $repository_path );
 
