@@ -25,6 +25,34 @@ final class Main {
 
 	public function __construct() {
 		add_action( 'admin_bar_menu', array( $this, 'modify_admin_bar' ), 999 );
+
+		$this->supported_plugins = array(
+			'types' => array(
+				'is_active' => 'TYPES_VERSION',
+				'version_constant' => 'TYPES_VERSION',
+				'abspath' => 'TYPES_ABSPATH'
+			),
+			'cred' => array(
+				'is_active' => 'CRED_FE_VERSION',
+				'version_constant' => 'CRED_FE_VERSION',
+				'abspath' => function() { return defined( 'CRED_ABSPATH' ) ? CRED_ABSPATH : CRED_ROOT_PLUGIN_PATH; },
+			),
+			'views' => array(
+				'is_active' => 'WPV_VERSION',
+				'version_constant' => 'WPV_VERSION',
+				'abspath' => 'WPV_PATH'
+			),
+			'layouts' => array(
+				'is_active' => 'WPDDL_VERSION',
+				'version_constant' => 'WPDDL_VERSION',
+				'abspath' => 'WPDDL_ABSPATH'
+			),
+			'access' => array(
+				'is_active' => 'TACCESS_VERSION',
+				'version_constant' => 'TACCESS_VERSION',
+				'abspath' => 'TACCESS_PLUGIN_PATH'
+			)
+		);
 	}
 
 
@@ -40,11 +68,9 @@ final class Main {
 			)
 		);
 
-		$this->add_types_node( $wp_admin_bar, self::PARENT_NOTE_ID );
-		$this->add_cred_node( $wp_admin_bar, self::PARENT_NOTE_ID );
-		$this->add_views_node( $wp_admin_bar, self::PARENT_NOTE_ID );
-		$this->add_access_node( $wp_admin_bar, self::PARENT_NOTE_ID );
-		$this->add_layouts_node( $wp_admin_bar, self::PARENT_NOTE_ID );
+		foreach( $this->supported_plugins as $plugin_slug => $plugin_config ) {
+			$this->add_plugin_node( $plugin_slug, $wp_admin_bar, self::PARENT_NOTE_ID );
+		}
 
 	}
 
@@ -121,147 +147,46 @@ final class Main {
 	}
 
 
-	/**
-	 * @param \WP_Admin_Bar $wp_admin_bar
-	 * @param string $parent
-	 */
-	private function add_types_node( $wp_admin_bar, $parent ) {
-
-		$is_types_active = defined( 'TYPES_VERSION' );
-
-		if( ! $is_types_active ) {
-			return;
-		}
-
-		$types_string = sprintf(
-			'types: %s%s',
-			TYPES_VERSION,
-			$this->get_branch_name( TYPES_ABSPATH )
-		);
-
-		$wp_admin_bar->add_node(
-			array(
-				'parent' => $parent,
-				'id' => "{$parent}_types",
-				'title' => $types_string
-			)
-		);
-	}
+	private $supported_plugins = array();
 
 
 	/**
 	 * @param \WP_Admin_Bar $wp_admin_bar
 	 * @param string $parent
 	 */
-	private function add_cred_node( $wp_admin_bar, $parent ) {
+	private function add_plugin_node( $plugin_slug, $wp_admin_bar, $parent ) {
 
-		$is_cred_active = defined( 'CRED_FE_VERSION' );
+		$plugin_config = $this->supported_plugins[ $plugin_slug ];
 
-		if( ! $is_cred_active ) {
+		$is_plugin_active = defined( $plugin_config['is_active'] );
+
+		if( ! $is_plugin_active ) {
 			return;
 		}
 
-		// Support before and after refactoring
-		$cred_path = defined( 'CRED_ABSPATH' ) ? CRED_ABSPATH : CRED_ROOT_PLUGIN_PATH;
+		$abspath = $plugin_config['abspath'];
+		if( is_callable( $abspath ) ) {
+			$abspath = call_user_func( $abspath );
+		} else {
+			$abspath = constant( $abspath );
+		}
 
-		$cred_string = sprintf(
-			'cred: %s%s',
-			CRED_FE_VERSION,
-			$this->get_branch_name( $cred_path )
+		$plugin_string = sprintf(
+			'%s: %s%s',
+			$plugin_slug,
+			constant( $plugin_config['version_constant'] ),
+			$this->get_branch_name( $abspath )
 		);
 
 		$wp_admin_bar->add_node(
 			array(
 				'parent' => $parent,
-				'id' => "{$parent}_cred",
-				'title' => $cred_string
+				'id' => "{$parent}_{$plugin_slug}",
+				'title' => $plugin_string
 			)
 		);
 	}
 
-
-	/**
-	 * @param \WP_Admin_Bar $wp_admin_bar
-	 * @param string $parent
-	 */
-	private function add_views_node( $wp_admin_bar, $parent ) {
-
-		$is_views_active = defined( 'WPV_VERSION' );
-
-		if( ! $is_views_active ) {
-			return;
-		}
-
-		$views_string = sprintf(
-			'views: %s%s',
-			WPV_VERSION,
-			$this->get_branch_name( WPV_PATH )
-		);
-
-		$wp_admin_bar->add_node(
-			array(
-				'parent' => $parent,
-				'id' => "{$parent}_views",
-				'title' => $views_string
-			)
-		);
-	}
-
-
-	/**
-	 * @param \WP_Admin_Bar $wp_admin_bar
-	 * @param string $parent
-	 */
-	private function add_layouts_node( $wp_admin_bar, $parent ) {
-
-		$is_layouts_active = defined( 'WPDDL_VERSION' );
-
-		if( ! $is_layouts_active ) {
-			return;
-		}
-
-		$layouts_string = sprintf(
-			'layouts: %s%s',
-			WPDDL_VERSION,
-			$this->get_branch_name( WPDDL_ABSPATH )
-		);
-
-		$wp_admin_bar->add_node(
-			array(
-				'parent' => $parent,
-				'id' => "{$parent}_layouts",
-				'title' => $layouts_string
-			)
-		);
-	}
-
-
-	/**
-	 * @param \WP_Admin_Bar $wp_admin_bar
-	 * @param string $parent
-	 */
-	private function add_access_node( $wp_admin_bar, $parent ) {
-
-		$is_access_loaded = defined( 'TACCESS_VERSION' );
-
-		if( ! $is_access_loaded ) {
-			return;
-		}
-
-		$access_string = sprintf(
-			'access: %s%s',
-			TACCESS_VERSION,
-			$this->get_branch_name( TACCESS_PLUGIN_PATH )
-		);
-
-		$wp_admin_bar->add_node(
-			array(
-				'parent' => $parent,
-				'id' => "{$parent}_access",
-				'title' => $access_string
-			)
-		);
-	}
 }
 
 
