@@ -1,7 +1,8 @@
 # tcl-status
-WordPress plugins that shows information about Toolset plugin versions, branch names
-(if the plugins are in a git repository ) and the loaded Toolset Common Library 
+WordPress plugins that shows information about Toolset plugin versions, branch names and the loaded Toolset Common Library 
 instance in the admin bar.
+
+Additionally, if the plugins are in a git repository, the plugin will show how long ago the branch was pulled from the origin.
 
 ![screenshot](./screenshot.png)
 
