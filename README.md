@@ -26,3 +26,24 @@ Following plugins are supported:
    - `git clone https://github.com/zaantar/tcl-status.git`
  - Activate the plugin.
    - `wp plugin activate tcl-status`
+   
+## Extensions
+
+It is possible to add further items by hooking into the `tcl_status_add_nodes` action.
+
+### m2m
+
+The "m2m" item displays the current state of the many-to-many relationship project (at the time when the admin menu is 
+rendered, that means [during the `admin_bar_menu` action](https://codex.wordpress.org/Plugin_API/Action_Reference)).
+
+Following tags can be present:
+
+- `enabled`: Many-to-many relationships are enabled.
+- `ready`: The support for many-to-many relationships is present but they're not enabled yet.
+- `missing`: No support for many-to-many relationships.
+- `full`: The m2m controller is fully loaded.
+- `core`: Only the m2m controller's core is loaded, saving resources.
+- `wpml-interop`: WPML interoperability with m2m associations is active.
+- `refresh-needed`: Full refresh of the association translation table is (or will be) needed.
+
+Tags in parentheses mean non-authoritative values (obtained through a workaround) that may not be reliable.
