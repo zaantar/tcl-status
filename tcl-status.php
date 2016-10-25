@@ -74,6 +74,10 @@ final class Main {
 			$this->add_plugin_node( $plugin_slug, $wp_admin_bar, self::PARENT_NOTE_ID );
 		}
 
+		$this->add_m2m_node( $wp_admin_bar, self::PARENT_NOTE_ID );
+
+		do_action( 'tcl_status_add_nodes', $wp_admin_bar, self::PARENT_NOTE_ID );
+
 	}
 
 
@@ -199,6 +203,63 @@ final class Main {
 
 		return sprintf( ' &#x2798; %s ago', $time_elapsed );
 	}
+
+
+	/**
+	 * @param \WP_Admin_Bar $wp_admin_bar
+	 * @param string $parent_slug
+	 */
+	public function add_m2m_node( $wp_admin_bar, $parent_slug ) {
+
+		$is_m2m_ready = apply_filters( 'toolset_is_m2m_ready', false );
+		$is_m2m_enabled = apply_filters( 'toolset_is_m2m_enabled', false );
+		if( $is_m2m_enabled ) {
+			$state = 'enabled';
+		} elseif( $is_m2m_ready ) {
+			$state = 'ready';
+		} else {
+			$state = 'missing';
+		}
+
+		if( 'missing' != $state ) {
+			$tags = array();
+
+			$m2m_controller = \Toolset_Relationship_Controller::get_instance();
+			$is_fully_initialized = $m2m_controller->is_fully_initialized();
+
+			if ( $is_fully_initialized ) {
+				$tags[] = 'full';
+			} else {
+				$tags[] = 'core';
+			}
+
+			if ( \Toolset_Wpml_Utils::is_wpml_active() ) {
+				$tags[] = 'wpml-interop';
+			}
+
+			$is_interop_up_to_date = get_option( 'toolset_m2m_is_wpml_interop_up_to_date', 'no' );
+			$is_interop_up_to_date = ( 'yes' == $is_interop_up_to_date );
+
+			if ( ! $is_interop_up_to_date ) {
+				$tags[] = 'refresh-needed';
+			}
+		}
+
+		$output = sprintf(
+			'm2m: %s%s',
+			$state,
+			empty( $tags ) ? '' : ' | ' . implode( ' ', $tags )
+		);
+
+		$wp_admin_bar->add_node(
+			array(
+				'parent' => $parent_slug,
+				'id' => "{$parent_slug}_m2m",
+				'title' => $output
+			)
+		);
+	}
+
 
 
 }
