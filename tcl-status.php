@@ -79,7 +79,7 @@ final class Main {
 
 	private function get_tcl_string() {
 		if( $this->is_tcl_loaded() ) {
-			return sprintf( 'tcl: %s (%d%s)', $this->get_tcl_plugin_location(), $this->get_tcl_version(), $this->get_tcl_branch_name() );
+			return sprintf( 'tcl: %s (%s%s)', $this->get_tcl_plugin_location(), $this->get_tcl_version(), $this->get_tcl_branch_name() );
 		} else {
 			return 'tcl: ----';
 		}
@@ -111,7 +111,7 @@ final class Main {
 		if( defined( 'TOOLSET_COMMON_VERSION_NUMBER' ) ) {
 			return TOOLSET_COMMON_VERSION_NUMBER;
 		} else {
-			return 0;
+			return ' ??';
 		}
 	}
 
