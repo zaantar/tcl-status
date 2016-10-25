@@ -221,15 +221,16 @@ final class Main {
 			$state = 'missing';
 		}
 
+		$tags = array();
+
 		if( 'missing' != $state ) {
-			$tags = array();
 
 			$m2m_controller = \Toolset_Relationship_Controller::get_instance();
 			$is_fully_initialized = $m2m_controller->is_fully_initialized();
 
 			if ( $is_fully_initialized ) {
 				$tags[] = 'full';
-			} else {
+			} elseif( 'ready' != $state ) {
 				$tags[] = 'core';
 			}
 
