@@ -4,7 +4,7 @@ instance in the admin bar.
 
 Additionally, if the plugins are in a git repository, the plugin will show how long ago the branch was pulled from the origin.
 
-![screenshot](./screenshot.png)
+![screenshot](./img/screenshot.png)
 
 The first item shows the information about the Toolset Comon library: 
 
@@ -47,3 +47,16 @@ Following tags can be present:
 - `refresh-needed`: Full refresh of the association translation table is (or will be) needed.
 
 Tags in parentheses mean non-authoritative values (obtained through a workaround) that may not be reliable.
+
+### Forcing an instance of the Toolset Common library
+
+The "Force TCL location" menu item contains a list of detected TCL instances. The user can choose one, which will reload
+the page with the selected instance. Internally, the forced TCL path is stored in an option and before TCL is loaded,
+the plugin adds it to the `$toolset_common_paths` global variable with a very hight version number (`999999`). 
+
+Because of the way how `$toolset_common_paths` is structured, TCL instances are indexed by versions and the ones with 
+the same version will get overwitten. In order to mitigate this, we're adding a list of known paths that will be checked 
+and additional entries will be added to the menu with the lowest version numbers possible. Currently, only the Types plugin 
+is supported (the plugin base directory must be `types`).
+
+![screenshot](./img/screenshot_force_tcl.png)
