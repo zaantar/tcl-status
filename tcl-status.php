@@ -26,7 +26,13 @@ final class Main {
 
 
 	private function __construct() {
-		add_action( 'admin_bar_menu', array( $this, 'modify_admin_bar' ), 999 );
+
+		add_action( 'after_setup_theme', array( $this, 'save_tcl_force_setting' ) );
+
+		// Because TCL uses: add_action( 'plugins_loaded', 'toolset_common_plugins_loaded', -1 );
+		add_action( 'plugins_loaded', array( $this, 'force_tcl_setting' ), -2 );
+
+		add_action( 'admin_bar_menu', array( $this, 'modify_admin_bar' ), 90 );
 
 		$this->supported_plugins = array(
 			'types' => array(
@@ -75,6 +81,7 @@ final class Main {
 		}
 
 		$this->add_m2m_node( $wp_admin_bar, self::PARENT_NOTE_ID );
+		$this->add_tcl_force_menu( $wp_admin_bar, self::PARENT_NOTE_ID );
 
 		do_action( 'tcl_status_add_nodes', $wp_admin_bar, self::PARENT_NOTE_ID );
 
@@ -95,8 +102,13 @@ final class Main {
 			return '----';
 		}
 
+		return $this->get_basename( TOOLSET_COMMON_PATH );
+	}
+
+
+	private function get_basename( $abspath ) {
 		// path to the common library, relative to WP plugin directory
-		$basename = plugin_basename( TOOLSET_COMMON_PATH );
+		$basename = plugin_basename( $abspath );
 
 		// get only the first directory name
 		// handle slashes (always) and a directory separator in case it's different (windows machines)
@@ -226,34 +238,42 @@ final class Main {
 		if( 'missing' != $state ) {
 
 			$m2m_controller = \Toolset_Relationship_Controller::get_instance();
-			$is_fully_initialized = $m2m_controller->is_fully_initialized();
+			if( ! method_exists( $m2m_controller, 'is_fully_initialized' ) ) {
 
-			if ( $is_fully_initialized ) {
-				$tags[] = 'full';
+				$tags[] = 'init-unknown';
 
-				$wpml_interop = \Toolset_Relationship_WPML_Interoperability::get_instance();
-				if( $wpml_interop->is_interop_active() ) {
-					$tags[] = 'wpml-interop';
-				}
+			} else {
 
-				if ( ! $wpml_interop->is_full_refresh_needed() ) {
-					$tags[] = 'refresh-needed';
-				}
+				$is_fully_initialized = $m2m_controller->is_fully_initialized();
 
-			} elseif( 'ready' != $state ) {
-				$tags[] = 'core';
+				if ( $is_fully_initialized ) {
+					$tags[] = 'full';
 
-				if ( \Toolset_Wpml_Utils::is_wpml_active() ) {
-					$tags[] = '(wpml-interop)';
-				}
+					$wpml_interop = \Toolset_Relationship_WPML_Interoperability::get_instance();
+					if( $wpml_interop->is_interop_active() ) {
+						$tags[] = 'wpml-interop';
+					}
 
-				$is_interop_up_to_date = get_option( 'toolset_m2m_is_wpml_interop_up_to_date', 'no' );
-				$is_interop_up_to_date = ( 'yes' == $is_interop_up_to_date );
+					if ( ! $wpml_interop->is_full_refresh_needed() ) {
+						$tags[] = 'refresh-needed';
+					}
 
-				if ( ! $is_interop_up_to_date ) {
-					$tags[] = '(refresh-needed)';
+				} elseif( 'ready' != $state ) {
+					$tags[] = 'core';
+
+					if ( \Toolset_Wpml_Utils::is_wpml_active() ) {
+						$tags[] = '(wpml-interop)';
+					}
+
+					$is_interop_up_to_date = get_option( 'toolset_m2m_is_wpml_interop_up_to_date', 'no' );
+					$is_interop_up_to_date = ( 'yes' == $is_interop_up_to_date );
+
+					if ( ! $is_interop_up_to_date ) {
+						$tags[] = '(refresh-needed)';
+					}
 				}
 			}
+
 		}
 
 		$output = sprintf(
@@ -271,6 +291,185 @@ final class Main {
 		);
 	}
 
+
+	/**
+	 * WordPress option that, if not empty, holds an array of TCL path and URL which should be forcibly loaded.
+	 *
+	 * array(
+	 *     'path' => $tcl_abspath,
+	 *     'url' => $tcl_base_url
+	 * )
+	 */
+	const FORCED_TCL_PATH_OPTION = 'tcl_status_forced_tcl_path';
+
+
+	/**
+	 * Add an admin menu item with a list of detected TCL instances.
+	 *
+	 * The user can choose one, which will reload the page (twice) and update the FORCED_TCL_PATH_OPTION.
+	 *
+	 * @param \WP_Admin_Bar $wp_admin_bar
+	 * @param string $parent_id
+	 */
+	private function add_tcl_force_menu( $wp_admin_bar, $parent_id ) {
+
+		$tcl_force_id = "{$parent_id}_tcl_force";
+
+		$wp_admin_bar->add_node(
+			array(
+				'parent' => $parent_id,
+				'id' => $tcl_force_id,
+				'title' => "Force TCL location"
+			)
+		);
+
+		// Add a menu item for each path
+		$toolset_common_paths = $this->get_possible_common_paths();
+
+		foreach( $toolset_common_paths as $version => $paths ) {
+
+			$basename = $this->get_basename( $paths['path'] );
+
+			$wp_admin_bar->add_node(
+				array(
+					'parent' => $tcl_force_id,
+					'id' => "{$tcl_force_id}_$basename",
+					'title' => sprintf( '%s (%d)', $basename, $version ),
+
+					// these args will be intercepted and used for updating the option
+					'href' => esc_url(
+						add_query_arg(
+							array(
+								'tcl-force' => '1',
+								'tcl-path' => esc_attr( $paths['path'] ),
+								'tcl-url' => esc_attr( $paths['url'] )
+							),
+							$_SERVER['REQUEST_URI']
+						)
+					)
+				)
+			);
+		}
+
+		// Finally, an item for clearing the option.
+		$wp_admin_bar->add_node(
+			array(
+				'parent' => $tcl_force_id,
+				'id' => "{$tcl_force_id}_restore",
+				'title' => 'Restore normal operation',
+				'href' => esc_url(
+					add_query_arg(
+						array(
+							'tcl-force' => '0'
+						),
+						$_SERVER['REQUEST_URI']
+					)
+				)
+			)
+		);
+	}
+
+
+	/**
+	 * Get a list of detected TCL instances.
+	 *
+	 * It is structured in the same way as the $toolset_common_paths global.
+	 * Because of that, TCL instances are indexed by versions and the ones with the same version will get overwitten.
+	 *
+	 * In order to mitigate this, we're adding a list of known paths that will be checked and additional
+	 * entries will be added with the lowest version numbers possible.
+	 *
+	 * @return array
+	 */
+	private function get_possible_common_paths() {
+		global $toolset_common_paths;
+
+		$results = $toolset_common_paths;
+
+		$paths_to_check = array(
+			'types' => array(
+				'path' => 'types/library/toolset/toolset-common'
+			)
+		);
+
+		// Manually add predefined paths if their plugin basenames are missing in the results
+		$lowest_index = 1;
+		foreach( $paths_to_check as $basename => $paths ) {
+			if( ! $this->common_paths_contain_basename( $results, $basename ) ) {
+				$results[ $lowest_index ] = array(
+					'path' => trailingslashit( WP_PLUGIN_DIR ) . $paths['path'],
+					'url' => plugins_url() . '/' . $paths['path']
+				);
+				++$lowest_index;
+			}
+		}
+
+
+		return $results;
+	}
+
+
+	private function common_paths_contain_basename( $toolset_common_paths, $basename ) {
+		foreach( $toolset_common_paths as $paths ) {
+			$current_basename = $this->get_basename( $paths['path'] );
+			if( $current_basename == $basename ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+
+	/**
+	 * Check for URL parameters and if tcl-force one is detected, update the option.
+	 *
+	 * After updating, these parameters are removed from the URI and the page is reloaded.
+	 */
+	public function save_tcl_force_setting() {
+
+		if( ! isset( $_GET['tcl-force'] ) ) {
+			return;
+		}
+
+		if( '1' == $_GET['tcl-force'] ) {
+			$option = array(
+				'path' => $_GET['tcl-path'],
+				'url' => $_GET['tcl-url']
+			);
+		} else {
+			$option = '';
+		}
+
+		\update_option( self::FORCED_TCL_PATH_OPTION, $option, true );
+
+		$redirect_to = \esc_url( \remove_query_arg( array( 'tcl-force', 'tcl-path', 'tcl-url' ), $_SERVER['REQUEST_URI'] ) );
+		\wp_redirect( $redirect_to );
+		exit;
+	}
+
+
+	/**
+	 * Forcibly load the TCL instance, if it's defined in the option.
+	 *
+	 * We'll just add another entry for it, with a very high priority. The TCL loading mechanism will handle the rest.
+	 */
+	public function force_tcl_setting() {
+		$forced_tcl = get_option( self::FORCED_TCL_PATH_OPTION, '' );
+		if( !is_array( $forced_tcl ) ) {
+			return;
+		}
+
+		// Primitive safety measure
+		$loader_path = untrailingslashit( $forced_tcl['path'] ) . DIRECTORY_SEPARATOR . 'loader.php';
+		if( ! file_exists( $loader_path ) ) {
+			return;
+		}
+
+		global $toolset_common_paths;
+
+		$toolset_common_paths[ 999999 ] = $forced_tcl;
+	}
 
 
 }
