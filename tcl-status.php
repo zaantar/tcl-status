@@ -410,10 +410,12 @@ final class Main {
 
 
 	private function common_paths_contain_basename( $toolset_common_paths, $basename ) {
-		foreach( $toolset_common_paths as $paths ) {
-			$current_basename = $this->get_basename( $paths['path'] );
-			if( $current_basename == $basename ) {
-				return true;
+		if ( !empty( $toolset_common_paths ) ) {
+			foreach( $toolset_common_paths as $paths ) {
+				$current_basename = $this->get_basename( $paths['path'] );
+				if( $current_basename == $basename ) {
+					return true;
+				}
 			}
 		}
 
