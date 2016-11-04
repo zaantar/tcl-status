@@ -2,7 +2,7 @@
 /*
 Plugin Name: Toolset Common Status
 Plugin URI: https://github.com/zaantar/tcl-status
-Description:
+Description: WordPress plugins that shows information about Toolset plugin versions, branch names and the loaded Toolset Common Library instance in the admin bar.
 Version: 0.1-dev
 Author: hkirat, zaantar
 Author URI: http://zaantar.eu
