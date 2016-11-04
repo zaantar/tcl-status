@@ -27,7 +27,9 @@ Following plugins are supported:
  - Activate the plugin.
    - `wp plugin activate tcl-status`
    
-## Extensions
+## Additional features
+
+### Extensions
 
 It is possible to add further items by hooking into the `tcl_status_add_nodes` action.
 
@@ -60,3 +62,8 @@ and additional entries will be added to the menu with the lowest version numbers
 is supported (the plugin base directory must be `types`).
 
 ![screenshot](./img/screenshot_force_tcl.png)
+
+### Plugin updates
+
+tcl-status is compatible with the [github-updater](https://github.com/afragen/github-updater) plugin. If you install 
+and activate it, you will recieve updates automatically, like for any other plugin.
