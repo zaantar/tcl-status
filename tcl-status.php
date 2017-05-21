@@ -250,28 +250,25 @@ final class Main {
 				if ( $is_fully_initialized ) {
 					$tags[] = 'full';
 
-					$wpml_interop = \Toolset_Relationship_WPML_Interoperability::get_instance();
+					/* $wpml_interop = \Toolset_Relationship_WPML_Interoperability::get_instance();
 					if( $wpml_interop->is_interop_active() ) {
 						$tags[] = 'wpml-interop';
 					}
 
 					if ( ! $wpml_interop->is_full_refresh_needed() ) {
 						$tags[] = 'refresh-needed';
-					}
+					} */
 
 				} elseif( 'ready' != $state ) {
+
 					$tags[] = 'core';
 
-					if ( \Toolset_Wpml_Utils::is_wpml_active() ) {
-						$tags[] = '(wpml-interop)';
-					}
-
-					$is_interop_up_to_date = get_option( 'toolset_m2m_is_wpml_interop_up_to_date', 'no' );
-					$is_interop_up_to_date = ( 'yes' == $is_interop_up_to_date );
-
-					if ( ! $is_interop_up_to_date ) {
-						$tags[] = '(refresh-needed)';
-					}
+					/* if( $is_fully_initialized ) {
+						$multilingual_mode = \Toolset_Relationship_Multilingual_Mode::get();
+						if ( 'off' !== $multilingual_mode ) {
+							$tags[] = "(wpml-interop: $multilingual_mode)";
+						}
+					} */
 				}
 			}
 
