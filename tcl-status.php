@@ -262,7 +262,7 @@ final class Main {
 				} elseif( 'ready' != $state ) {
 					$tags[] = 'core';
 
-					if ( \Toolset_Wpml_Utils::is_wpml_active() ) {
+					if ( \Toolset_WPML_Compatibility::get_instance()->is_wpml_active_and_configured() ) {
 						$tags[] = '(wpml-interop)';
 					}
 
