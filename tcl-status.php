@@ -340,7 +340,7 @@ final class Main {
 							array(
 								'tcl-force' => '1',
 								'tcl-path' => esc_attr( $paths['path'] ),
-								'tcl-url' => esc_attr( $paths['url'] )
+								'tcl-url' => esc_attr( isset( $paths['url'] ) ? $paths['url'] : '' )
 							),
 							$_SERVER['REQUEST_URI']
 						)
