@@ -469,6 +469,8 @@ final class Main {
 		global $toolset_common_paths;
 
 		$toolset_common_paths[ 999999 ] = $forced_tcl;
+
+		add_filter( 'toolset_disable_upgrade_routine', '__return_true' );
 	}
 
 
